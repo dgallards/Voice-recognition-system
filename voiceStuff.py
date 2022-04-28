@@ -1,17 +1,21 @@
 import speech_recognition as sr
-import sounddevice as sd
 from pydub import AudioSegment
 from scipy.io.wavfile import write
 import os
 
-def recordVoice(time, username):
-    fs = 44100
+def record(fs, duration):
+
+    import sounddevice as sd
+    sd._initialize()
     sd.default.samplerate = fs
     sd.default.channels = 2
-    duration = time  # seconds
-    myrecording = sd.rec(int(duration * fs ), samplerate=fs, channels=2)
+    recording = sd.rec(int(duration * fs), samplerate=fs, channels=2)
     sd.wait()
+    return recording
 
+def recordVoice(time, username):
+    fs = 44100
+    myrecording = record(fs, time)
     if username:
         write("audios/" + username + ".wav", fs, myrecording)
     else:
