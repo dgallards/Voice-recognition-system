@@ -1,3 +1,6 @@
+"""
+Este archivo es el encargado de realizar métodos relacionados con el tratamiento de voz, desde el grabado hasta la generación de un modelo de predicción.
+"""
 import speech_recognition as sr
 from pydub import AudioSegment
 from scipy.io.wavfile import write
@@ -16,24 +19,30 @@ import soundfile
 import os
 import database
 from sklearn.mixture import GaussianMixture
+import sounddevice as sd
 
+# Se crea una clase con el fin de facilitar la llamada a funciones y datos.
 class model:
+    # Modelo de predicción.
     gmmModel = GaussianMixture()
+    # Orden de los archivos cargados, es muy importante mantenerlo para saber cual es la predicción del modelo.
     nameOrder = []
+
     def __init__(self, gmmModel, nameOrder):
         self.gmmModel = gmmModel
         self.nameOrder = nameOrder
 
     def updateModel(self, gmmModel):
         self.gmmModel = gmmModel
+
     def incrementList(self, name):
         self.nameOrder.append(name)
 
+
 modelio = model("xd", [])
 
+# Método usado para configurar el recorder y grabar audio durante varios segundos.
 def record(fs, duration):
-
-    import sounddevice as sd
     sd._initialize()
     sd.default.samplerate = fs
     sd.default.channels = 2
@@ -41,6 +50,10 @@ def record(fs, duration):
     sd.wait()
     return recording
 
+
+# Método con dos modos, si no se introduce usuario significa que se está detectando una voz de inicio de sesión.
+# Si el usuario se está registrando se guarda su voz en el directorio de audios.
+# Si el usuario está logeando, se genera un archivo temporal para detectar su contraseña.
 def recordVoice(time, username):
     fs = 44100
     myrecording = record(fs, time)
@@ -51,13 +64,17 @@ def recordVoice(time, username):
         sound = AudioSegment.from_wav("features.wav")
         sound.export("speech.wav", format="wav")
 
+
+# Método usado para el Speech to Text, haciendo una llamada a la API de Cloud Speech, tiene que cargar los datos desde un archivo formateado.
 def speechRecognition():
     r = sr.Recognizer()
-    audio = sr.AudioFile('speech.wav')
+    audio = sr.AudioFile("speech.wav")
     with audio as source:
         audio = r.record(source)
     return r.recognize_google(audio, language="es-ES")
 
+
+# Método que carga todos los archivos de features de los usuarios existentes en la base de datos y genera un modelo que los predice.
 def regenerateModel():
 
     featureList = []
@@ -68,32 +85,43 @@ def regenerateModel():
         featureList.append(features)
         modelio.incrementList(filename.replace(".csv", ""))
 
-        
-    #initialize gmm from sklearn
-    modelio.updateModel(GaussianMixture(n_components=len(featureList), covariance_type='diag',n_init=3, reg_covar=1e-1, max_iter=1000, tol=1e-8))
+    modelio.updateModel(
+        GaussianMixture(
+            n_components=len(featureList),
+            covariance_type="diag",
+            n_init=3,
+            reg_covar=1e-1,
+            max_iter=1000,
+            tol=1e-8,
+        )
+    )
     modelio.gmmModel.fit(featureList)
 
-#extract the features of the new audio.
-#mode 1 new user, mode 0 existing user
+
+# Método usado para extraer las features de un usuario.
+# Si el modo es 0 predice si el usuario intentando logear existe en la base de datos.
+# Si el modo es 1 extrae y guarda las features del usuario que intenta registrarse.
 def extract_features(username, mode):
     filename = "audios/" + username + ".wav" if mode else "speech.wav"
     with soundfile.SoundFile(filename) as audio:
         waveform = audio.read(dtype="float32")
         waveform_mono = librosa.to_mono(waveform.T)
 
-        waveform16k_mono = librosa.resample(waveform_mono, orig_sr=audio.samplerate, target_sr=16000)
-        features = np.squeeze(librosa.feature.mfcc(y=waveform16k_mono, sr=16000, n_mfcc=1)).reshape(-1,1).reshape(1,-1)
+        waveform16k_mono = librosa.resample(
+            waveform_mono, orig_sr=audio.samplerate, target_sr=16000
+        )
+        features = (
+            np.squeeze(librosa.feature.mfcc(y=waveform16k_mono, sr=16000, n_mfcc=1))
+            .reshape(-1, 1)
+            .reshape(1, -1)
+        )
 
-        if mode: np.savetxt("features/" + username + ".csv", features) 
-        else: return predict(features)
+        if mode:
+            np.savetxt("features/" + username + ".csv", features)
+        else:
+            return predict(features)
 
 
-
+# Método que devuelve un nombre con el resultado de la predicción del modelo.
 def predict(features):
-    xd =  modelio.nameOrder[modelio.gmmModel.predict(features)[0]]
-    return xd
-
-
-
-
-
+    return modelio.nameOrder[modelio.gmmModel.predict(features)[0]]
