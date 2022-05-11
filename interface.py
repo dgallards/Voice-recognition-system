@@ -17,75 +17,75 @@ Se utiliza una gran cantidad de tecnologías en el proyecto tales como MongoDB, 
 Este archivo controla la interfaz gráfica de la aplicación y la lógica de la misma, haciendo uso de las funciones de la clase VoiceStuff y de la base de datos.
 """
 
-from cgitb import enable
-from curses import panel
-import hashlib
-import multiprocessing
-from PyQt5 import QtWidgets, uic
-from PyQt5.QtCore import pyqtSlot, QObject, QThread, pyqtSignal
-from PyQt5.QtWidgets import QMessageBox
-import voiceStuff
-import database
 import sys
-from multiprocessing import Process
+from cgitb import enable
+
+from PyQt5 import QtWidgets, uic
+from PyQt5.QtCore import QObject, QThread, pyqtSignal, pyqtSlot
 from redmail import gmail
 
-# Inicialización de QT y la base de datos.
+import database
+import voiceStuff
+
+# Inicialización de la aplicación de QT y la base de datos.
 app = QtWidgets.QApplication(sys.argv)
 baseDeDatos = database.dbHandler()
 
 # Se crean ahora las diferentes pantallas de la aplicación, cargandolas de los archivos .ui
+
+# Pantalla inicial.
 class InitialScreen(QtWidgets.QDialog):
     def __init__(self):
-        super(InitialScreen, self).__init__()  # Call the inherited classes __init__ method
-        uic.loadUi("initialScreen.ui", self)  # Load the .ui file
+        super(InitialScreen, self).__init__()
+        uic.loadUi("initialScreen.ui", self)
 
 
+# Pantalla de inicio de sesión.
 class LoginUsuario(QtWidgets.QDialog):
     def __init__(self):
-        super(LoginUsuario, self).__init__()  # Call the inherited classes __init__ method
-        uic.loadUi("loginUsuario.ui", self)  # Load the .ui file
+        super(LoginUsuario, self).__init__()
+        uic.loadUi("loginUsuario.ui", self)
 
 
+# Pantalla de envío de correos electrónicos.
 class EnvioCorreo(QtWidgets.QDialog):
     def __init__(self):
-        super(EnvioCorreo, self).__init__()  # Call the inherited classes __init__ method
-        uic.loadUi("enviarCorreo.ui", self)  # Load the .ui file
+        super(EnvioCorreo, self).__init__()
+        uic.loadUi("enviarCorreo.ui", self)
 
 
+# Pantalla de toma de voz, carga el texto del archivo text.txt.
 class SigninUsuario(QtWidgets.QDialog):
     def __init__(self):
-        super(SigninUsuario, self).__init__()  # Call the inherited classes __init__ method
-        uic.loadUi("signinUsuario.ui", self)  # Load the .ui file
+        super(SigninUsuario, self).__init__()
+        uic.loadUi("signinUsuario.ui", self)
         with open("text.txt", "r") as f:
             self.text.setText(f.read())
             f.close()
 
 
+# Pantalla de gestión de credenciales.
 class ConfiguracionUsuario(QtWidgets.QDialog):
     def __init__(self):
-        super(ConfiguracionUsuario, self).__init__()  # Call the inherited classes __init__ method
-        uic.loadUi("configuracionUsuario.ui", self)  # Load the .ui file
+        super(ConfiguracionUsuario, self).__init__()
+        uic.loadUi("configuracionUsuario.ui", self)
 
 
+# Panel de utilidades del usuario.
 class PanelUsuario(QtWidgets.QDialog):
     def __init__(self):
-        super(PanelUsuario, self).__init__()  # Call the inherited classes __init__ method
-        uic.loadUi("panelUsuario.ui", self)  # Load the .ui file
+        super(PanelUsuario, self).__init__()
+        uic.loadUi("panelUsuario.ui", self)
 
 
+# Pantalla de toma de credenciales del usuario.
 class CreacionUsuario(QtWidgets.QDialog):
     def __init__(self):
-        super(CreacionUsuario, self).__init__()  # Call the inherited classes __init__ method
-        uic.loadUi("creacionUsuario.ui", self)  # Load the .ui file
+        super(CreacionUsuario, self).__init__()
+        uic.loadUi("creacionUsuario.ui", self)
 
 
-class EnvioEmail(QtWidgets.QDialog):
-    def __init__(self):
-        super(EnvioEmail, self).__init__()  # Call the inherited classes __init__ method
-        uic.loadUi("enviarCorreo.ui", self)  # Load the .ui file
-
-
+# Clase encargada de la toma de audio sin congelar la interfaz.
 class Worker(QObject):
     finished = pyqtSignal()
     progress = pyqtSignal(int)
@@ -95,7 +95,7 @@ class Worker(QObject):
         self.finished.emit()
 
 
-# Clase que controla la interfaz gráfica de la aplicación, conexiones entre pantallas y llamadas a diferentes métodos.
+# Clase que controla la interfaz gráfica de la aplicación y su lógica, conexiones entre pantallas y llamadas a diferentes métodos.
 class ui:
     def __init__(self):
         self.initialScreen = InitialScreen()
@@ -106,10 +106,10 @@ class ui:
         self.panelUsuario = PanelUsuario()
         self.creacionUsuario = CreacionUsuario()
 
-        # Datos del usuario actual
+        # Datos del usuario actual, cuenta con 3 campos. Username, Password y Email.
         self.user = {}
 
-        # Conexiones y llamadas a métodos.
+        # Conexiones y llamadas a métodos al interactuar con la interfaz.
         self.initialScreen.show()
         self.initialScreen.signButton.clicked.connect(
             lambda: self.move(self.initialScreen, self.creacionUsuario)
@@ -120,16 +120,18 @@ class ui:
         self.signinUsuario.loginButton.clicked.connect(
             lambda: self.move(self.signinUsuario, self.panelUsuario)
         )
-        self.signinUsuario.recordButton.clicked.connect(lambda: self.recordVoiceThread())
+        self.signinUsuario.recordButton.clicked.connect(lambda: self.recordVoice())
         self.signinUsuario.loginButton.clicked.connect(
-            lambda: lambda: self.move(self.signinUsuario, self.panelUsuario)
+            lambda: self.move(self.signinUsuario, self.panelUsuario)
         )
         self.loginUsuario.errorLabel.setHidden(True)
         self.loginUsuario.signButton.clicked.connect(
             lambda: self.move(self.loginUsuario, self.creacionUsuario)
         )
         self.loginUsuario.listenButton.clicked.connect(lambda: self.detectVoices())
-        self.configuracionUsuario.confirmButton.clicked.connect(lambda: self.confirmChanges())
+        self.configuracionUsuario.confirmButton.clicked.connect(
+            lambda: self.confirmChanges()
+        )
         self.configuracionUsuario.backButton.clicked.connect(
             lambda: self.move(self.configuracionUsuario, self.panelUsuario)
         )
@@ -161,10 +163,13 @@ class ui:
         self.user["password"] = self.creacionUsuario.password.text()
         self.user["email"] = self.creacionUsuario.email.text()
         if baseDeDatos.createUser(self.user):
+            self.signinUsuario.recordButton.setEnabled(False)
             voiceStuff.recordVoice(10, self.user["username"])
+            self.signinUsuario.loginButton.setEnabled(True)
             voiceStuff.extract_features(self.user["username"], True)
 
-    # Intento de grabación de voz sin bloquear la interfaz. No lo conseguimos.
+    # Intento de grabación de voz sin bloquear la interfaz. No lo llegamos a conseguir.
+    # El objetivo era que se iniciase un thread en el que worker grabase la voz y, cuando acabase, activase el botón de continuación.
     def recordVoiceThread(self):
         self.thread = QThread()
         self.worker = Worker()
@@ -175,25 +180,36 @@ class ui:
         self.thread.finished.connect(self.thread.deleteLater)
         self.thread.start()
         self.signinUsuario.recordButton.setEnabled(False)
-        self.thread.finished.connect(lambda: self.signinUsuario.loginButton.setEnabled(True))
+        self.thread.finished.connect(
+            lambda: self.signinUsuario.loginButton.setEnabled(True)
+        )
 
     # Método que detecta la voz del usuario e intenta identificarlo.
     # Pasa dos comprobaciones, la identificación de la persona y su contraseña, si las dos coinciden, el usuario inicia sesión.
     def detectVoices(self):
+
+        # Toma de voz y regeneración del modelo de reconocimiento.
         voiceStuff.recordVoice(10, None)
         voiceStuff.regenerateModel()
+
+        # Reconocimiento del parlante.
         nombre = voiceStuff.extract_features(None, False)
         print(nombre)
+
+        # Reconocimiento de la contraseña.
         conversation = voiceStuff.speechRecognition()
         print(conversation)
+
+        # Comprobación de coincidencia.
         self.user = baseDeDatos.validateUser(nombre, conversation)
+
         if self.user:
             self.user["username"] = nombre
             self.move(self.loginUsuario, self.panelUsuario)
         else:
             self.loginUsuario.errorLabel.setHidden(False)
 
-    # Método usado para cambiar las credenciales del usuario.
+    # Método usado para cambiar las credenciales del usuario tomando las de la UI.
     def confirmChanges(self):
         secondUser = self.user
         if self.configuracionUsuario.username.text() != "":
@@ -202,20 +218,21 @@ class ui:
             secondUser["password"] = self.configuracionUsuario.password.text()
         if self.configuracionUsuario.email.text() != "":
             secondUser["email"] = self.configuracionUsuario.email.text()
+        # Actualización de credenciales.
         if baseDeDatos.updateUser(self.user, secondUser):
             self.user = secondUser
             self.move(self.configuracionUsuario, self.panelUsuario)
 
-    # Metodo usado para tomar los datos del usuario.
+    # Metodo usado para tomar los datos del usuario al registrarlo.
     def createUser(self):
-        self.username = self.creacionUsuario.username.text()
-        self.password = self.creacionUsuario.password.text()
-        self.email = self.creacionUsuario.email.text()
+        self.user["username"] = self.creacionUsuario.username.text()
+        self.user["password"] = self.creacionUsuario.password.text()
+        self.user["email"] = self.creacionUsuario.email.text()
         self.move(self.creacionUsuario, self.signinUsuario)
 
-    # Método usado para borrar al usuario de la base de datos y sus archivos.
+    # Método usado para borrar al usuario de la base de datos y sus archivos de audio y features.
     def deleteUser(self):
-        baseDeDatos.deleteUser(self.user["username"])
+        baseDeDatos.delUser(self.user["username"])
         self.move(self.panelUsuario, self.initialScreen)
 
     # Método usado para moverse entre pantallas.
@@ -224,9 +241,10 @@ class ui:
         screen2.show()
 
     # Método usado para enviar un correo tomando los datos de diferentes campos de la pantalla y Redmail.
+    # El correo debe tener activada la función de IMAP.
     def sendEmail(self):
         gmail.username = self.user["email"]
-        # xkdpshvcnlnscnhv diego.diegogz.gallardo53@gmail.com
+        # Para pruebas: diego.diegogz.gallardo53@gmail.com xkdpshvcnlnscnhv
         gmail.password = self.envioCorreo.contrasena.text()
         gmail.send(
             subject=self.envioCorreo.asunto.text(),
