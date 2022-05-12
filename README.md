@@ -16,3 +16,15 @@ Para ello ofrece una interfaz gráfica con varias funciones básicas implementad
 Se utiliza una gran cantidad de tecnologías en el proyecto tales como MongoDB, PyQt, Cloud Speech o Machine Learning entre otras.
 
 Si bien el Jupyter Notebook vale como una pequeña demo limitada para mostrar el proceso técnico que el programa usa, la versión en Python ofrece la interfaz gráfica y más libertad en las acciones a escoger.
+
+--------------------------------------------------------------------------------
+TODO PLAUSIBLE:
+ - Añadir excepciones a varios métodos, como:
+       - Que el usuario deba añadir algo en los campos de las credenciales al crear su cuenta, como se hace al modificar las credenciales de uno existente.
+       - Añadir una excepción cuando el modelo tenga menos de dos voces.
+ - Comprobar si sería demasiado restrictivo que la similitud de las contraseñas fuese de un 100%, en vez de un 80%.
+ - Mejorar el modelo actual para lograr mayor precisión, aunque en pruebas locales ha mejorado enormemente, el dataset es muy pequeño.
+TODO NO PLAUSIBLE:
+ - Mejorar la interfaz de usuario.
+ - Pasar a Android con una app.
+ - Migrar los servicios a un servidor de microservicios.
