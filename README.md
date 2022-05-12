@@ -24,6 +24,7 @@ TODO PLAUSIBLE:
        - Añadir una excepción cuando el modelo tenga menos de dos voces.
  - Comprobar si sería demasiado restrictivo que la similitud de las contraseñas fuese de un 100%, en vez de un 80%.
  - Mejorar el modelo actual para lograr mayor precisión, aunque en pruebas locales ha mejorado enormemente, el dataset es muy pequeño.
+
 TODO NO PLAUSIBLE:
  - Mejorar la interfaz de usuario.
  - Pasar a Android con una app.
