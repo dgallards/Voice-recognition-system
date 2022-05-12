@@ -132,6 +132,9 @@ class ui:
         self.configuracionUsuario.confirmButton.clicked.connect(
             lambda: self.confirmChanges()
         )
+        self.configuracionUsuario.confirmButton.clicked.connect(
+            lambda: self.move(self.configuracionUsuario, self.panelUsuario)
+        )
         self.configuracionUsuario.backButton.clicked.connect(
             lambda: self.move(self.configuracionUsuario, self.panelUsuario)
         )

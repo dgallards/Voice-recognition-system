@@ -47,9 +47,9 @@ class dbHandler:
 
     # Borrado del usuario de la base de datos y de las carpetas de audio y features.
     def delUser(self, user):
-        for foundUser in self.db.users.find({"username": user["username"]}):
+        for foundUser in self.db.users.find({"username": user}):
             try:
-                self.db.users.delete_one(user)
+                self.db.users.delete_one(foundUser)
                 os.remove("features/" + user["username"] + ".csv")
                 os.remove("audios/" + user["username"] + ".wav")
                 return True
