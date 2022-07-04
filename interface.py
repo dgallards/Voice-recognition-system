@@ -247,7 +247,6 @@ class ui:
     # El correo debe tener activada la función de IMAP.
     def sendEmail(self):
         gmail.username = self.user["email"]
-        # Para pruebas: diego.diegogz.gallardo53@gmail.com xkdpshvcnlnscnhv
         gmail.password = self.envioCorreo.contrasena.text()
         gmail.send(
             subject=self.envioCorreo.asunto.text(),
